@@ -1,0 +1,17 @@
+{
+	"version": 1,
+	"attached_datasets": [
+		{
+			"id": "1265f5e9-329c-4a65-877a-4c3becd210e3",
+			"mount": "test_vcf"
+		},
+		{
+			"id": "adb864a9-22f9-4c66-bee7-53e573ff10f0",
+			"mount": "snpeff"
+		},
+		{
+			"id": "b3db642d-6278-456b-8440-a8e06b16a08b",
+			"mount": "reference"
+		}
+	]
+}

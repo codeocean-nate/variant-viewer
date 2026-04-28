@@ -1,0 +1,88 @@
+{
+	"version": 1,
+	"base_image": "codeocean/bioconductor-320:RELEASE_3_20_NoGPU",
+	"post_install": true,
+	"options": {
+		"registry_host_arg": true,
+		"git_ask_pass": true,
+		"mount_secrets": true
+	},
+	"installers": {
+		"apt": {
+			"packages": [
+				{
+					"name": "bcftools"
+				},
+				{
+					"name": "chromium-browser"
+				},
+				{
+					"name": "openjdk-17-jre-headless"
+				},
+				{
+					"name": "pandoc"
+				},
+				{
+					"name": "samtools"
+				},
+				{
+					"name": "shiny-server"
+				},
+				{
+					"name": "tabix"
+				}
+			],
+			"install_software_properties_common": true,
+			"install_gnupg": true
+		},
+		"rcran": {
+			"packages": [
+				{
+					"name": "shiny"
+				},
+				{
+					"name": "shinyFiles"
+				},
+				{
+					"name": "shinyjs"
+				},
+				{
+					"name": "webshot2"
+				},
+				{
+					"name": "chromote"
+				},
+				{
+					"name": "arrow"
+				},
+				{
+					"name": "dplyr"
+				},
+				{
+					"name": "tidyr"
+				},
+				{
+					"name": "DT"
+				},
+				{
+					"name": "plotly"
+				},
+				{
+					"name": "qqman"
+				},
+				{
+					"name": "SNPRelate"
+				},
+				{
+					"name": "karyoploteR"
+				},
+				{
+					"name": "digest"
+				},
+				{
+					"name": "igvShiny"
+				}
+			]
+		}
+	}
+}

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /code
+Rscript -e "shiny::runApp('/code', host = '0.0.0.0', port = 8080, launch.browser = FALSE)"
