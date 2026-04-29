@@ -64,7 +64,7 @@ ui <- dashboardPage(
       
       checkboxGroupInput("impact_filter", "SnpEff Impact",
                          choices = c("HIGH", "MODERATE", "LOW", "MODIFIER"),
-                         selected = c("HIGH", "MODERATE")),
+                         selected = c("HIGH", "MODERATE", "LOW", "MODIFIER")),
       
       hr(),
       actionButton("reset_filters", "Reset Filters", icon = icon("refresh"))

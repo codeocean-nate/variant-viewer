@@ -122,8 +122,10 @@ server <- function(input, output, session) {
         filter(var_type %in% input$var_type)
     }
     
-    # QUAL filter
-    df <- df %>% filter(QUAL >= input$qual_filter[1] & QUAL <= input$qual_filter[2])
+    # QUAL filter (handle NA values)
+    if ("QUAL" %in% names(df)) {
+      df <- df %>% filter(is.na(QUAL) | (QUAL >= input$qual_filter[1] & QUAL <= input$qual_filter[2]))
+    }
     
     # PASS filter
     if (input$pass_only) {
@@ -166,7 +168,7 @@ server <- function(input, output, session) {
     updateSelectizeInput(session, "gene_search", selected = character(0))
     updateSelectInput(session, "consequence_filter", selected = NULL)
     updateCheckboxGroupInput(session, "impact_filter", 
-                              selected = c("HIGH", "MODERATE"))
+                              selected = c("HIGH", "MODERATE", "LOW", "MODIFIER"))
   })
   
   # Table output
