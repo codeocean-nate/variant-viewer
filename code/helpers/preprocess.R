@@ -74,14 +74,20 @@ preprocess_vcf <- function(vcf_path,
   # Stage 1: Count input variants (5%)
   report_progress(0, "Reading VCF header and counting records...")
   
-  # Quick count via bcftools if available
+  # Quick count via bcftools if available (handles .vcf.gz automatically)
   n_total <- tryCatch({
-    bcftools_out <- system2("bcftools", args = c("view", "-H", shQuote(vcf_path), "|", "wc", "-l"),
-                            stdout = TRUE, stderr = FALSE)
-    as.integer(bcftools_out)
+    # bcftools view -H excludes header lines
+    bcftools_out <- system2("bcftools", 
+                           args = c("view", "-H", vcf_path),
+                           stdout = TRUE, stderr = FALSE)
+    length(bcftools_out)
   }, error = function(e) {
-    # Fallback: parse VCF header
-    con <- file(vcf_path, "r")
+    # Fallback: use gzfile() which handles both .vcf and .vcf.gz
+    con <- if (grepl("\\.gz$", vcf_path)) {
+      gzfile(vcf_path, "r")
+    } else {
+      file(vcf_path, "r")
+    }
     count <- 0
     while (length(line <- readLines(con, n = 1, warn = FALSE)) > 0) {
       if (!startsWith(line, "#")) count <- count + 1
