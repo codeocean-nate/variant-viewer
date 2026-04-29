@@ -1,4 +1,4 @@
-# hash:sha256:c1243562a09a772b3b0e6e6fae69da7d30b83f13e9548bad84b2ec59ffca6191
+# hash:sha256:fb93f2bcaf562675c7d7146947f38b474fb14a45e0975e38447435802f2562d0
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/bioconductor-320:RELEASE_3_20_NoGPU
 
@@ -7,12 +7,6 @@ ARG GIT_ASKPASS
 COPY git-ask-pass /
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends software-properties-common gnupg \
-    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys \
-        0xAD2323F17326AE31401037733E05EBFF05441C52 \
-    && add-apt-repository -y 'deb http://deb.codeocean.com/shiny-server-trusty/ ubuntu main' \
-    && apt-get purge -y --autoremove software-properties-common \
-    && apt-get update \
     && apt-get install -y --no-install-recommends \
         bcftools=1.19-1build2 \
         build-essential=12.10ubuntu1 \
@@ -33,19 +27,19 @@ RUN apt-get update \
         zlib1g-dev=1:1.3.dfsg-3.1ubuntu2.1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN Rscript -e 'remotes::install_version("shiny", "1.13.0")' \
-    && Rscript -e 'remotes::install_version("shinydashboard", "0.7.3")' \
-    && Rscript -e 'remotes::install_version("shinyFiles", "0.9.3")' \
-    && Rscript -e 'remotes::install_version("shinyjs", "2.1.1")' \
-    && Rscript -e 'remotes::install_version("DT", "0.34.0")' \
-    && Rscript -e 'remotes::install_version("plotly", "4.12.0")' \
-    && Rscript -e 'remotes::install_version("arrow", "23.0.1.2")' \
-    && Rscript -e 'remotes::install_version("digest", "0.6.39")' \
-    && Rscript -e 'remotes::install_version("rmarkdown", "2.31")' \
-    && Rscript -e 'remotes::install_version("webshot2", "0.1.2")' \
-    && Rscript -e 'remotes::install_version("chromote", "0.5.1")' \
-    && Rscript -e 'remotes::install_version("remotes", "2.5.0")' \
-    && Rscript -e 'remotes::install_version("dplyr", "1.2.1")'
+RUN Rscript -e 'remotes::install_version("shiny")' \
+    && Rscript -e 'remotes::install_version("shinydashboard")' \
+    && Rscript -e 'remotes::install_version("shinyjs")' \
+    && Rscript -e 'remotes::install_version("DT")' \
+    && Rscript -e 'remotes::install_version("plotly")' \
+    && Rscript -e 'remotes::install_version("arrow")' \
+    && Rscript -e 'remotes::install_version("digest")' \
+    && Rscript -e 'remotes::install_version("rmarkdown")' \
+    && Rscript -e 'remotes::install_version("webshot2")' \
+    && Rscript -e 'remotes::install_version("chromote")' \
+    && Rscript -e 'remotes::install_version("remotes")' \
+    && Rscript -e 'remotes::install_version("dplyr")' \
+    && Rscript -e 'remotes::install_version("jsonlite")'
 
 COPY postInstall /
 RUN --mount=type=secret,id=secrets . /run/secrets/secrets \

@@ -1,10 +1,9 @@
 metadata_version: 1
-name: clinical-variant-explorer
-description: Interactive R Shiny application for clinical genetics researchers. Annotates
-  VCF files with SnpEff (GRCh38.105), provides sortable variant tables, six visualization
-  tabs (Manhattan, AF distribution, PCA, Karyotype, IGV), and advanced filtering by
-  gene, consequence, impact, and quality metrics. Designed for non-coder clinical
-  users.
+name: variant-viewer
+description: Interactive R Shiny viewer for annotated variant data. Displays pre-processed
+  VCF files with SnpEff annotations, providing sortable tables, allele frequency plots,
+  karyotype visualization, and IGV genome browser. Advanced filtering by gene, consequence,
+  impact, and quality metrics.
 tags:
 - clinical genomics
 - variant annotation

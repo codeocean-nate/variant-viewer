@@ -1,130 +1,76 @@
 suppressPackageStartupMessages({
   library(shiny)
-  library(shinyFiles)
   library(shinyjs)
   library(arrow)
   library(dplyr)
   library(DT)
   library(plotly)
   library(karyoploteR)
+  library(jsonlite)
 })
 
 # Source helpers
-source("/code/helpers/preprocess.R")
 source("/code/helpers/export_utils.R")
 source("/code/helpers/igv_utils.R")
 source("/code/helpers/ui_helpers.R")
 
 server <- function(input, output, session) {
   
-  # File browser for /data/
-  volumes <- c(data = "/data")
-  shinyFileChoose(input, "vcf_browser", roots = volumes, 
-                  filetypes = c("vcf", "gz"))
-  
-  # Selected VCF path
-  selected_vcf <- reactiveVal(NULL)
-  
-  # Data-loaded flag — only set TRUE by successful Process VCF run
+  # Data-loaded flag
   data_loaded <- reactiveVal(FALSE)
   
-  # Reset loaded state whenever the user picks a different VCF
-  observeEvent(selected_vcf(), {
-    data_loaded(FALSE)
-  }, ignoreInit = TRUE, ignoreNULL = TRUE)
+  `%||%` <- function(a, b) if (is.null(a) || (length(a) == 1 && is.na(a))) b else a
+  
+  available_datasets <- reactive({
+    dirs <- list.dirs("/data", recursive = FALSE, full.names = TRUE)
+    dirs <- dirs[vapply(dirs, function(d) file.exists(file.path(d, "variants.parquet")), logical(1))]
+    if (!length(dirs)) return(character(0))
+    setNames(dirs, basename(dirs))
+  })
   
   observe({
-    req(input$vcf_browser)
-    if (is.integer(input$vcf_browser)) return()
-    
-    file_selected <- parseFilePaths(volumes, input$vcf_browser)
-    if (nrow(file_selected) > 0) {
-      selected_vcf(as.character(file_selected$datapath[1]))
-    }
+    ch <- available_datasets()
+    updateSelectInput(session, "dataset_picker", choices = ch,
+                      selected = if (length(ch)) ch[[1]] else character(0))
   })
   
-  # Display selected path
-  output$selected_vcf_path <- renderText({
-    vcf <- selected_vcf()
-    if (is.null(vcf)) {
-      "No file selected"
-    } else {
-      paste("Selected:", vcf)
-    }
+  selected_dataset <- reactive({
+    d <- input$dataset_picker
+    if (is.null(d) || d == "" || !dir.exists(d)) NULL else d
   })
   
-  # Enable/disable Process button
   observe({
-    if (is.null(selected_vcf())) {
-      shinyjs::disable("process_vcf")
-    } else {
-      shinyjs::enable("process_vcf")
-    }
+    d <- selected_dataset()
+    data_loaded(!is.null(d) && file.exists(file.path(d, "variants.parquet")))
   })
   
+  output$dataset_meta <- renderText({
+    d <- selected_dataset()
+    if (is.null(d)) return("No annotated-variants dataset found in /data/. Attach one.")
+    mp <- file.path(d, "vcf_meta.json")
+    if (!file.exists(mp)) return(basename(d))
+    m <- jsonlite::read_json(mp)
+    sprintf("%s • %s variants • %s samples", m$source_vcf %||% "?",
+            m$n_variants %||% "?", m$n_samples %||% "?")
+  })
   
   # Disable the entire filter panel until data is loaded
   observe({
     shinyjs::toggleState("filter_panel", condition = data_loaded())
   })
   
-  # Process VCF button handler
-  observeEvent(input$process_vcf, {
-    req(selected_vcf())
-    
-    vcf_path <- selected_vcf()
-    force <- input$force_reprocess
-    
-    withProgress(message = "Processing VCF", value = 0, {
-      
-      progress_cb <- function(fraction, message, detail = "") {
-        setProgress(value = fraction, message = message, detail = detail)
-      }
-      
-      result <- tryCatch({
-        preprocess_vcf(
-          vcf_path = vcf_path,
-          force = force,
-          progress_cb = progress_cb
-        )
-      }, error = function(e) {
-        showNotification(paste("Error:", e$message), type = "error", duration = NULL)
-        return(NULL)
-      })
-      
-      if (!is.null(result)) {
-        data_loaded(TRUE)
-        
-        if (result$from_cache) {
-          showNotification(
-            sprintf("Cached results loaded in %.1f seconds", result$elapsed),
-            type = "message", duration = 5
-          )
-        } else {
-          showNotification(
-            sprintf("Processing complete: %d variants in %.1f seconds", 
-                    result$n_variants, result$elapsed),
-            type = "message", duration = 8
-          )
-        }
-      }
-    })
-  })
-  
-  # Load cached data
+  # Load variants data from selected dataset
   variants_data <- reactive({
-    req(data_loaded())
-    req(file.exists("/scratch/variants.parquet"))
-    read_parquet("/scratch/variants.parquet")
+    req(data_loaded()); d <- selected_dataset(); req(d)
+    read_parquet(file.path(d, "variants.parquet"))
   })
   
   # Load gene list for autocomplete
   observe({
-    if (file.exists("/scratch/genes.rds")) {
-      genes <- readRDS("/scratch/genes.rds")
-      updateSelectizeInput(session, "gene_search", 
-                           choices = genes, server = TRUE)
-    }
+    d <- selected_dataset(); req(d)
+    gp <- file.path(d, "genes.rds")
+    if (file.exists(gp))
+      updateSelectizeInput(session, "gene_search", choices = readRDS(gp), server = TRUE)
   })
   
   # Update consequence filter choices dynamically
@@ -304,7 +250,8 @@ server <- function(input, output, session) {
                style = "color: red;"))
     }
     
-    vcf_tracks <- c(selected_vcf(), "/scratch/annotated.vcf")
+    d <- selected_dataset()
+    vcf_tracks <- if (!is.null(d)) file.path(d, "annotated.vcf.gz") else character(0)
     vcf_tracks <- vcf_tracks[file.exists(vcf_tracks)]
     
     tryCatch({

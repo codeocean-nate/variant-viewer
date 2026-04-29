@@ -1,7 +1,6 @@
 suppressPackageStartupMessages({
   library(shinydashboard)
   library(shinyjs)
-  library(shinyFiles)
   library(DT)
   library(plotly)
 })
@@ -10,7 +9,7 @@ ui <- dashboardPage(
   skin = "blue",
   
   dashboardHeader(
-    title = "Clinical Variant Explorer",
+    title = "Variant Viewer",
     tags$li(
       class = "dropdown",
       actionButton("export_btn", "Export", icon = icon("download"))
@@ -20,23 +19,13 @@ ui <- dashboardPage(
   dashboardSidebar(
     useShinyjs(),
     
-    # Data panel (collapsible)
     tags$div(
       id = "data_panel",
       style = "padding: 15px; border-bottom: 1px solid #ddd;",
-      h4("Data", style = "margin-top: 0;"),
-      shinyFilesButton("vcf_browser", "Browse VCF Files", 
-                       "Select a VCF file from /data/", 
-                       multiple = FALSE, icon = icon("folder-open")),
-      br(), br(),
-      textOutput("selected_vcf_path"),
-      br(),
-      checkboxInput("force_reprocess", "Force re-process (ignore cache)", value = FALSE),
-      br(),
-      actionButton("process_vcf", "Process VCF", icon = icon("play"), 
-                   class = "btn-primary", width = "100%")
+      h4("Variants Dataset", style = "margin-top: 0;"),
+      selectInput("dataset_picker", NULL, choices = NULL),
+      tags$small(textOutput("dataset_meta"), style = "color: #666;")
     ),
-    
     hr(),
     
     tags$div(
