@@ -62,38 +62,28 @@ export_csv <- function(filtered_df, output_path) {
 #' @param width Width in pixels
 #' @param height Height in pixels
 export_plot_png <- function(plot_obj, output_path, width = 1200, height = 800) {
-  
-  # Try plotly::orca first
-  if (requireNamespace("plotly", quietly = TRUE) && inherits(plot_obj, "plotly")) {
-    tryCatch({
-      plotly::orca(plot_obj, file = output_path, width = width, height = height)
-      if (file.exists(output_path)) return(output_path)
-    }, error = function(e) {
-      # Fall back to webshot2
-    })
+  if (!requireNamespace("htmlwidgets", quietly = TRUE) ||
+      !requireNamespace("webshot2", quietly = TRUE)) {
+    stop("Plot export requires htmlwidgets and webshot2 packages")
   }
   
-  # Fallback: webshot2
-  if (requireNamespace("htmlwidgets", quietly = TRUE) && requireNamespace("webshot2", quietly = TRUE)) {
-    temp_html <- tempfile(fileext = ".html")
-    
-    if (inherits(plot_obj, "plotly")) {
-      htmlwidgets::saveWidget(plot_obj, temp_html, selfcontained = TRUE)
-    } else if (inherits(plot_obj, "ggplot")) {
-      htmlwidgets::saveWidget(plotly::ggplotly(plot_obj), temp_html, selfcontained = TRUE)
-    } else {
-      stop("Unsupported plot object type")
-    }
-    
-    webshot2::webshot(temp_html, output_path, vwidth = width, vheight = height)
-    unlink(temp_html)
-    
-    if (file.exists(output_path)) {
-      return(output_path)
-    }
+  temp_html <- tempfile(fileext = ".html")
+  on.exit(unlink(temp_html), add = TRUE)
+  
+  if (inherits(plot_obj, "plotly")) {
+    htmlwidgets::saveWidget(plot_obj, temp_html, selfcontained = TRUE)
+  } else if (inherits(plot_obj, "ggplot")) {
+    htmlwidgets::saveWidget(plotly::ggplotly(plot_obj), temp_html, selfcontained = TRUE)
+  } else {
+    stop("Unsupported plot object type: ", paste(class(plot_obj), collapse = ", "))
   }
   
-  stop("Plot export failed: neither plotly::orca nor webshot2 succeeded")
+  webshot2::webshot(temp_html, output_path, vwidth = width, vheight = height)
+  
+  if (!file.exists(output_path)) {
+    stop("Plot export failed: webshot2 did not produce ", output_path)
+  }
+  output_path
 }
 
 #' Export PDF report

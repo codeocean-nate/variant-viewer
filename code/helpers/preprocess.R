@@ -157,11 +157,16 @@ preprocess_vcf <- function(vcf_path,
   ref_genome <- list.files(reference_dir, pattern = "\\.fa$|\\.fasta$",
                            full.names = TRUE, recursive = FALSE)[1]
   
-  vcf <- if (!is.na(ref_genome) && file.exists(ref_genome)) {
-    readVcf(annotated_vcf, genome = ref_genome)
-  } else {
-    readVcf(annotated_vcf, genome = "GRCh38")
+  if (is.na(ref_genome) || !file.exists(ref_genome)) {
+    stop("Reference genome FASTA not found in ", reference_dir,
+         ". Attach the hg38 reference Data Asset to /data/reference/ before processing.")
   }
+  if (!file.exists(paste0(ref_genome, ".fai"))) {
+    stop("Reference index (.fai) not found alongside ", ref_genome,
+         ". The reference Data Asset must include a .fai index.")
+  }
+  
+  vcf <- readVcf(annotated_vcf, genome = ref_genome)
   
   # Extract fields
   df <- data.frame(
@@ -181,22 +186,45 @@ preprocess_vcf <- function(vcf_path,
   if ("AC" %in% names(info_fields)) df$AC <- info_fields$AC
   if ("AN" %in% names(info_fields)) df$AN <- info_fields$AN
   
-  # SnpEff ANN field
+  # SnpEff ANN field — pick the most-severe annotation per variant
   if ("ANN" %in% names(info_fields)) {
     ann <- info_fields$ANN
-    ann_split <- strsplit(as.character(ann), "\\|")
-    df$Effect <- sapply(ann_split, function(x) if(length(x) > 1) x[2] else NA)
-    df$Impact <- sapply(ann_split, function(x) if(length(x) > 2) x[3] else NA)
-    df$Gene_Name <- sapply(ann_split, function(x) if(length(x) > 3) x[4] else NA)
-    df$Gene_ID <- sapply(ann_split, function(x) if(length(x) > 4) x[5] else NA)
-    df$Transcript_ID <- sapply(ann_split, function(x) if(length(x) > 6) x[7] else NA)
-    df$HGVS_c <- sapply(ann_split, function(x) if(length(x) > 9) x[10] else NA)
-    df$HGVS_p <- sapply(ann_split, function(x) if(length(x) > 10) x[11] else NA)
+    impact_rank <- c(HIGH = 4, MODERATE = 3, LOW = 2, MODIFIER = 1)
+    
+    pick_top_annotation <- function(ann_field) {
+      if (is.null(ann_field) || is.na(ann_field) || ann_field == "") {
+        return(rep(NA_character_, 7))
+      }
+      annotations <- unlist(strsplit(as.character(ann_field), ","))
+      parts_list <- lapply(annotations, function(a) unlist(strsplit(a, "\\|")))
+      impacts <- sapply(parts_list, function(p) if (length(p) >= 3) p[3] else NA)
+      ranks <- impact_rank[impacts]
+      ranks[is.na(ranks)] <- 0
+      top <- parts_list[[which.max(ranks)]]
+      get_field <- function(x, i) if (length(x) >= i) x[i] else NA_character_
+      c(
+        Effect        = get_field(top, 2),
+        Impact        = get_field(top, 3),
+        Gene_Name     = get_field(top, 4),
+        Gene_ID       = get_field(top, 5),
+        Transcript_ID = get_field(top, 7),
+        HGVS_c        = get_field(top, 10),
+        HGVS_p        = get_field(top, 11)
+      )
+    }
+    
+    parsed <- t(sapply(as.character(ann), pick_top_annotation))
+    df$Effect        <- parsed[, "Effect"]
+    df$Impact        <- parsed[, "Impact"]
+    df$Gene_Name     <- parsed[, "Gene_Name"]
+    df$Gene_ID       <- parsed[, "Gene_ID"]
+    df$Transcript_ID <- parsed[, "Transcript_ID"]
+    df$HGVS_c        <- parsed[, "HGVS_c"]
+    df$HGVS_p        <- parsed[, "HGVS_p"]
   }
   
   # Genotype fields
   geno_list <- geno(vcf)
-  if ("GT" %in% names(geno_list)) df$n_samples <- ncol(geno_list$GT)
   if ("DP" %in% names(geno_list)) df$mean_DP <- rowMeans(geno_list$DP, na.rm = TRUE)
   if ("GQ" %in% names(geno_list)) df$mean_GQ <- rowMeans(geno_list$GQ, na.rm = TRUE)
   

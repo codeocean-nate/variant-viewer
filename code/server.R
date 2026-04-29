@@ -4,19 +4,16 @@ suppressPackageStartupMessages({
   library(shinyjs)
   library(arrow)
   library(dplyr)
-  library(tidyr)
   library(DT)
   library(plotly)
-  library(qqman)
-  library(SNPRelate)
   library(karyoploteR)
 })
 
 # Source helpers
 source("/code/helpers/preprocess.R")
 source("/code/helpers/export_utils.R")
-source("/code/helpers/pca_utils.R")
 source("/code/helpers/igv_utils.R")
+source("/code/helpers/ui_helpers.R")
 
 server <- function(input, output, session) {
   
@@ -27,6 +24,14 @@ server <- function(input, output, session) {
   
   # Selected VCF path
   selected_vcf <- reactiveVal(NULL)
+  
+  # Data-loaded flag — only set TRUE by successful Process VCF run
+  data_loaded <- reactiveVal(FALSE)
+  
+  # Reset loaded state whenever the user picks a different VCF
+  observeEvent(selected_vcf(), {
+    data_loaded(FALSE)
+  }, ignoreInit = TRUE, ignoreNULL = TRUE)
   
   observe({
     req(input$vcf_browser)
@@ -57,43 +62,10 @@ server <- function(input, output, session) {
     }
   })
   
-  # Data loaded flag
-  data_loaded <- reactiveVal(FALSE)
   
-  # Check if data exists at startup
+  # Disable the entire filter panel until data is loaded
   observe({
-    if (file.exists("/scratch/variants.parquet")) {
-      data_loaded(TRUE)
-    }
-  })
-  
-  # Disable filters until data is loaded
-  observe({
-    if (!data_loaded()) {
-      shinyjs::disable("chr_filter")
-      shinyjs::disable("start_pos")
-      shinyjs::disable("end_pos")
-      shinyjs::disable("var_type")
-      shinyjs::disable("qual_filter")
-      shinyjs::disable("pass_only")
-      shinyjs::disable("maf_filter")
-      shinyjs::disable("gene_search")
-      shinyjs::disable("consequence_filter")
-      shinyjs::disable("impact_filter")
-      shinyjs::disable("reset_filters")
-    } else {
-      shinyjs::enable("chr_filter")
-      shinyjs::enable("start_pos")
-      shinyjs::enable("end_pos")
-      shinyjs::enable("var_type")
-      shinyjs::enable("qual_filter")
-      shinyjs::enable("pass_only")
-      shinyjs::enable("maf_filter")
-      shinyjs::enable("gene_search")
-      shinyjs::enable("consequence_filter")
-      shinyjs::enable("impact_filter")
-      shinyjs::enable("reset_filters")
-    }
+    if (data_loaded()) shinyjs::enable("filter_panel") else shinyjs::disable("filter_panel")
   })
   
   # Process VCF button handler
@@ -270,126 +242,40 @@ server <- function(input, output, session) {
     }
   })
   
-  # Manhattan plot
-  output$manhattan_plot <- renderPlotly({
+
+  
+  # Reactive plot builder — used by both render output and export handler
+  build_maf_histogram <- reactive({
     df <- filtered_variants()
-    req(nrow(df) > 0)
-    
-    # Prepare data for Manhattan plot
-    df_manhattan <- df %>%
-      mutate(
-        CHR = as.integer(gsub("chr", "", gsub("X", "23", gsub("Y", "24", gsub("M", "25", CHROM))))),
-        BP = POS,
-        P = 10^(-QUAL / 10)  # Convert QUAL to pseudo p-value
-      ) %>%
-      filter(!is.na(CHR) & !is.na(BP) & !is.na(P))
-    
-    plot_ly(df_manhattan, x = ~BP, y = ~-log10(P), color = ~as.factor(CHR),
-            type = "scatter", mode = "markers",
-            text = ~paste("ID:", ID, "<br>Gene:", Gene_Name, "<br>Effect:", Effect),
-            hoverinfo = "text") %>%
-      layout(
-        xaxis = list(title = "Genomic Position"),
-        yaxis = list(title = "-log10(P)"),
-        showlegend = FALSE
-      )
+    if (nrow(df) == 0 || !"AF" %in% names(df)) return(NULL)
+    df <- df %>% mutate(MAF = pmin(AF, 1 - AF))
+    plot_ly(df, x = ~MAF, type = "histogram", nbinsx = 50) %>%
+      layout(xaxis = list(title = "Minor Allele Frequency"),
+             yaxis = list(title = "Count"))
   })
   
   # MAF histogram
   output$maf_histogram <- renderPlotly({
-    if (!data_loaded()) {
-      return(plot_ly() %>% 
-               layout(title = list(text = "No variant data loaded.", x = 0.5, xanchor = "center")))
-    }
-    
-    df <- filtered_variants()
-    req(nrow(df) > 0, "AF" %in% names(df))
-    
-    df <- df %>% mutate(MAF = pmin(AF, 1 - AF))
-    
-    plot_ly(df, x = ~MAF, type = "histogram", nbinsx = 50) %>%
-      layout(
-        xaxis = list(title = "Minor Allele Frequency"),
-        yaxis = list(title = "Count")
-      )
+    if (!data_loaded()) return(empty_state_plotly())
+    p <- build_maf_histogram()
+    if (is.null(p)) return(empty_state_plotly("AF field not available or no variants match filters."))
+    p
   })
   
-  # Site frequency spectrum
-  output$sfs_plot <- renderPlotly({
-    df <- filtered_variants()
-    req(nrow(df) > 0, "AC" %in% names(df), "AN" %in% names(df))
-    
-    df_sfs <- df %>%
-      mutate(freq_bin = cut(AC / AN, breaks = seq(0, 1, 0.05), include.lowest = TRUE)) %>%
-      count(freq_bin) %>%
-      filter(!is.na(freq_bin))
-    
-    plot_ly(df_sfs, x = ~freq_bin, y = ~n, type = "bar") %>%
-      layout(
-        xaxis = list(title = "Allele Frequency Bin"),
-        yaxis = list(title = "Count")
-      )
-  })
+
   
-  # PCA computation (reactive)
-  pca_result <- reactive({
-    if (!data_loaded()) return(NULL)
-    
-    df <- filtered_variants()
-    if (nrow(df) == 0) return(NULL)
-    
-    # Check sample count
-    if (!"n_samples" %in% names(df) || is.na(df$n_samples[1]) || df$n_samples[1] < 3) {
-      return(NULL)
-    }
-    
-    # Debounce: only recompute if filter changed > 500ms ago
-    # For now, compute on demand
-    tryCatch({
-      compute_pca(
-        vcf_path = "/scratch/annotated.vcf",
-        filtered_variant_ids = df$ID,
-        ld_prune = input$ld_prune,
-        progress_cb = function(msg) message(msg)
-      )
-    }, error = function(e) {
-      message("PCA computation failed: ", e$message)
-      return(NULL)
-    })
-  })
-  
-  # PCA plot
-  output$pca_plot <- renderPlotly({
-    if (!data_loaded()) {
-      return(plot_ly() %>% 
-               layout(title = list(text = "No variant data loaded. Use the Data panel in the sidebar to select a VCF file from /data/, then click Process VCF.", 
-                                   x = 0.5, xanchor = "center")))
-    }
-    
-    result <- pca_result()
-    
-    if (is.null(result)) {
-      df <- variants_data()
-      n_samples <- if ("n_samples" %in% names(df)) df$n_samples[1] else 0
-      return(plot_ly() %>% 
-               layout(title = list(text = sprintf("PCA requires at least 3 samples — current data has %d sample(s)", n_samples),
-                                   x = 0.5, xanchor = "center")))
-    }
-    
-    plot_pca(result, pc_x = 1, pc_y = 2)
-  })
-  
+
   # Karyotype plot
   output$karyotype_plot <- renderPlot({
     if (!data_loaded()) {
-      plot.new()
-      text(0.5, 0.5, "No variant data loaded. Use the Data panel in the sidebar to select a VCF file from /data/, then click Process VCF.", 
-           cex = 1.2, col = "gray40")
+      empty_state_baseplot()
       return()
     }
-    
     df <- filtered_variants()
-    req(nrow(df) > 0)
+    if (nrow(df) == 0) {
+      empty_state_baseplot("No variants match current filters.")
+      return()
+    }
     
     # Convert to GRanges
     gr <- GRanges(
@@ -406,10 +292,7 @@ server <- function(input, output, session) {
   
   # IGV viewer
   output$igv_ui <- renderUI({
-    if (!data_loaded()) {
-      return(p("No variant data loaded. Use the Data panel in the sidebar to select a VCF file from /data/, then click Process VCF.",
-               style = "color: gray; font-size: 14px;"))
-    }
+    if (!data_loaded()) return(empty_state_html())
     
     # Initialize IGV with reference and VCF tracks
     ref_fasta <- list.files("/data/reference", pattern = "\\.fa$|\\.fasta$", 
@@ -477,17 +360,14 @@ server <- function(input, output, session) {
         exported_files <- c(exported_files, csv_path)
       }
       
-      # Export plots
+      # Export plots — use the build_* reactive, NOT the output$ render expression
       if (input$export_plots) {
-        # Manhattan
-        manhattan_path <- file.path("/results", paste0("manhattan_", timestamp, ".png"))
-        export_plot_png(output$manhattan_plot(), manhattan_path)
-        exported_files <- c(exported_files, manhattan_path)
-        
-        # MAF histogram
-        maf_path <- file.path("/results", paste0("maf_histogram_", timestamp, ".png"))
-        export_plot_png(output$maf_histogram(), maf_path)
-        exported_files <- c(exported_files, maf_path)
+        maf_plot <- build_maf_histogram()
+        if (!is.null(maf_plot)) {
+          maf_path <- file.path("/results", paste0("maf_histogram_", timestamp, ".png"))
+          export_plot_png(maf_plot, maf_path)
+          exported_files <- c(exported_files, maf_path)
+        }
       }
       
       # Export PDF report
@@ -521,13 +401,5 @@ server <- function(input, output, session) {
       removeModal()
       showNotification(paste("Export failed:", e$message), type = "error", duration = NULL)
     })
-  })
-  })
-}
-   removeModal()
-    showNotification("Export complete! Check /results", type = "message")
-  })
-}
-ts", type = "message")
   })
 }

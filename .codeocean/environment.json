@@ -11,72 +11,36 @@
 		"apt": {
 			"packages": [
 				{
-					"name": "bcftools"
+					"name": "bcftools",
+					"version": "1.19-1build2"
 				},
 				{
-					"name": "chromium-browser"
+					"name": "chromium-browser",
+					"version": "2:1snap1-0ubuntu2"
 				},
 				{
-					"name": "openjdk-17-jre-headless"
+					"name": "openjdk-17-jre-headless",
+					"version": "17.0.18+8-1~24.04.1"
 				},
 				{
-					"name": "pandoc"
+					"name": "pandoc",
+					"version": "3.8.2.1-1"
 				},
 				{
-					"name": "samtools"
+					"name": "samtools",
+					"version": "1.19.2-1build2"
 				},
 				{
-					"name": "shiny-server"
+					"name": "shiny-server",
+					"version": "1.5.20.1002-2build1"
 				},
 				{
-					"name": "tabix"
+					"name": "tabix",
+					"version": "1.19+ds-1.1build3"
 				}
 			],
 			"install_software_properties_common": true,
 			"install_gnupg": true
-		},
-		"rcran": {
-			"packages": [
-				{
-					"name": "shiny"
-				},
-				{
-					"name": "shinyFiles"
-				},
-				{
-					"name": "shinyjs"
-				},
-				{
-					"name": "webshot2"
-				},
-				{
-					"name": "chromote"
-				},
-				{
-					"name": "arrow"
-				},
-				{
-					"name": "dplyr"
-				},
-				{
-					"name": "tidyr"
-				},
-				{
-					"name": "DT"
-				},
-				{
-					"name": "plotly"
-				},
-				{
-					"name": "qqman"
-				},
-				{
-					"name": "digest"
-				},
-				{
-					"name": "rmarkdown"
-				}
-			]
 		}
 	}
 }

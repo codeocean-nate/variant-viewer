@@ -26,7 +26,6 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 
 BiocManager::install(c(
   "VariantAnnotation",
-  "SNPRelate",
   "karyoploteR"
 ), update = FALSE, ask = FALSE)
 
