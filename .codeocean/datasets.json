@@ -4,6 +4,10 @@
 		{
 			"id": "b3db642d-6278-456b-8440-a8e06b16a08b",
 			"mount": "reference"
+		},
+		{
+			"id": "f50ccafd-c7f7-4535-a2a2-dde6534ecfc0",
+			"mount": "processed_variants"
 		}
 	]
 }

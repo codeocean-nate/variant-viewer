@@ -85,43 +85,56 @@
 		"rcran": {
 			"packages": [
 				{
-					"name": "shiny"
+					"name": "shiny",
+					"version": "1.13.0"
 				},
 				{
-					"name": "shinydashboard"
+					"name": "shinydashboard",
+					"version": "0.7.3"
 				},
 				{
-					"name": "shinyjs"
+					"name": "shinyjs",
+					"version": "2.1.1"
 				},
 				{
-					"name": "DT"
+					"name": "DT",
+					"version": "0.34.0"
 				},
 				{
-					"name": "plotly"
+					"name": "plotly",
+					"version": "4.12.0"
 				},
 				{
-					"name": "arrow"
+					"name": "arrow",
+					"version": "23.0.1.2"
 				},
 				{
-					"name": "digest"
+					"name": "digest",
+					"version": "0.6.39"
 				},
 				{
-					"name": "rmarkdown"
+					"name": "rmarkdown",
+					"version": "2.31"
 				},
 				{
-					"name": "webshot2"
+					"name": "webshot2",
+					"version": "0.1.2"
 				},
 				{
-					"name": "chromote"
+					"name": "chromote",
+					"version": "0.5.1"
 				},
 				{
-					"name": "remotes"
+					"name": "remotes",
+					"version": "2.5.0"
 				},
 				{
-					"name": "dplyr"
+					"name": "dplyr",
+					"version": "1.2.1"
 				},
 				{
-					"name": "jsonlite"
+					"name": "jsonlite",
+					"version": "2.0.0"
 				}
 			]
 		}

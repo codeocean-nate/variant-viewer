@@ -153,7 +153,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "chr_filter", selected = "All")
     updateCheckboxGroupInput(session, "var_type", 
                               selected = c("SNP", "Indel", "MNP"))
-    updateSliderInput(session, "qual_filter", value = c(20, 100))
+    updateSliderInput(session, "qual_filter", value = c(20, 1000))
     updateCheckboxInput(session, "pass_only", value = TRUE)
     updateSliderInput(session, "maf_filter", value = c(0.01, 0.5))
     updateSelectizeInput(session, "gene_search", selected = character(0))
