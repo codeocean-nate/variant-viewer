@@ -1,24 +1,41 @@
 #!/usr/bin/env Rscript
 
-# Install additional CRAN packages not in Bioconductor base
-# Bioconductor 3.20 already includes: VariantAnnotation, SNPRelate, karyoploteR,
-# Biostrings, GenomicRanges, Rsamtools, dplyr, tidyr, readr, ggplot2, etc.
-
-cat("Installing additional CRAN packages...\n")
+# Install CRAN packages
+cat("Installing CRAN packages...\n")
 install.packages(c(
   "shiny",
   "shinydashboard", 
+  "shinyFiles",
   "shinyjs",
   "DT",
   "plotly",
   "arrow",
   "vroom",
   "qqman",
+  "digest",
+  "rmarkdown",
+  "webshot2",
+  "chromote",
   "remotes"
 ), repos = "https://cloud.r-project.org", quiet = FALSE)
 
-# Install igvShiny from GitHub
+# Install Bioconductor packages
+cat("Installing Bioconductor packages...\n")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install(c(
+  "VariantAnnotation",
+  "SNPRelate",
+  "karyoploteR"
+), update = FALSE, ask = FALSE)
+
+# Install igvShiny from GitHub (fallback if Bioc version unavailable)
 cat("Installing igvShiny from GitHub...\n")
-remotes::install_github("gladkia/igvShiny", upgrade = "never", quiet = FALSE)
+tryCatch({
+  remotes::install_github("gladkia/igvShiny", upgrade = "never", quiet = FALSE)
+}, error = function(e) {
+  cat("igvShiny installation failed (non-critical):", e$message, "\n")
+})
 
 cat("Package installation complete!\n")

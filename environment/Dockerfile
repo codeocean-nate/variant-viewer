@@ -1,4 +1,4 @@
-# hash:sha256:927cbf2aa8c16dbabda9601f30ad6821b1da2296b269d4cd650dbfc2240f305b
+# hash:sha256:63d2297e7154dcb4f386f54d711227df1164fe4acc692df08426cd066bbc6671
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/bioconductor-320:RELEASE_3_20_NoGPU
 
@@ -28,10 +28,8 @@ RUN Rscript -e 'remotes::install_version("shiny")' \
     && Rscript -e 'remotes::install_version("DT")' \
     && Rscript -e 'remotes::install_version("plotly")' \
     && Rscript -e 'remotes::install_version("qqman")' \
-    && Rscript -e 'remotes::install_version("SNPRelate")' \
-    && Rscript -e 'remotes::install_version("karyoploteR")' \
     && Rscript -e 'remotes::install_version("digest")' \
-    && Rscript -e 'remotes::install_version("igvShiny")'
+    && Rscript -e 'remotes::install_version("rmarkdown")'
 
 COPY postInstall /
 RUN --mount=type=secret,id=secrets . /run/secrets/secrets \

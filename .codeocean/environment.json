@@ -71,16 +71,10 @@
 					"name": "qqman"
 				},
 				{
-					"name": "SNPRelate"
-				},
-				{
-					"name": "karyoploteR"
-				},
-				{
 					"name": "digest"
 				},
 				{
-					"name": "igvShiny"
+					"name": "rmarkdown"
 				}
 			]
 		}
