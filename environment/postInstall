@@ -1,40 +1,13 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env bash
+set -ex
 
-# Install CRAN packages
-cat("Installing CRAN packages...\n")
-install.packages(c(
-  "shiny",
-  "shinydashboard", 
-  "shinyFiles",
-  "shinyjs",
-  "DT",
-  "plotly",
-  "arrow",
-  "vroom",
-  "qqman",
-  "digest",
-  "rmarkdown",
-  "webshot2",
-  "chromote",
-  "remotes"
-), repos = "https://cloud.r-project.org", quiet = FALSE)
+# Bioconductor packages (not yet exposed via capsule_environment API tool)
+Rscript -e "
+if (!requireNamespace('BiocManager', quietly = TRUE))
+    install.packages('BiocManager', repos = 'https://cloud.r-project.org')
+BiocManager::install(c('VariantAnnotation', 'karyoploteR'), update = FALSE, ask = FALSE)
+"
 
-# Install Bioconductor packages
-cat("Installing Bioconductor packages...\n")
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-
-BiocManager::install(c(
-  "VariantAnnotation",
-  "karyoploteR"
-), update = FALSE, ask = FALSE)
-
-# Install igvShiny from GitHub (fallback if Bioc version unavailable)
-cat("Installing igvShiny from GitHub...\n")
-tryCatch({
-  remotes::install_github("gladkia/igvShiny", upgrade = "never", quiet = FALSE)
-}, error = function(e) {
-  cat("igvShiny installation failed (non-critical):", e$message, "\n")
-})
-
-cat("Package installation complete!\n")
+# GitHub-only package: igvShiny
+Rscript -e "remotes::install_github('gladkia/igvShiny', upgrade = 'never', quiet = FALSE)" || \
+  echo "WARNING: igvShiny install failed; IGV tab will use the iframe fallback path."

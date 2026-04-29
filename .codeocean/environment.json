@@ -11,36 +11,99 @@
 		"apt": {
 			"packages": [
 				{
-					"name": "bcftools",
-					"version": "1.19-1build2"
+					"name": "bcftools"
 				},
 				{
-					"name": "chromium-browser",
-					"version": "2:1snap1-0ubuntu2"
+					"name": "build-essential"
 				},
 				{
-					"name": "openjdk-17-jre-headless",
-					"version": "17.0.18+8-1~24.04.1"
+					"name": "chromium-browser"
 				},
 				{
-					"name": "pandoc",
-					"version": "3.8.2.1-1"
+					"name": "libbz2-dev"
 				},
 				{
-					"name": "samtools",
-					"version": "1.19.2-1build2"
+					"name": "libcairo2-dev"
 				},
 				{
-					"name": "shiny-server",
-					"version": "1.5.20.1002-2build1"
+					"name": "libcurl4-openssl-dev"
 				},
 				{
-					"name": "tabix",
-					"version": "1.19+ds-1.1build3"
+					"name": "libjpeg-dev"
+				},
+				{
+					"name": "liblzma-dev"
+				},
+				{
+					"name": "libpng-dev"
+				},
+				{
+					"name": "libssl-dev"
+				},
+				{
+					"name": "libxml2-dev"
+				},
+				{
+					"name": "openjdk-17-jre-headless"
+				},
+				{
+					"name": "pandoc"
+				},
+				{
+					"name": "samtools"
+				},
+				{
+					"name": "tabix"
+				},
+				{
+					"name": "zlib1g-dev"
 				}
 			],
 			"install_software_properties_common": true,
 			"install_gnupg": true
+		},
+		"rcran": {
+			"packages": [
+				{
+					"name": "shiny"
+				},
+				{
+					"name": "shinydashboard"
+				},
+				{
+					"name": "shinyFiles"
+				},
+				{
+					"name": "shinyjs"
+				},
+				{
+					"name": "DT"
+				},
+				{
+					"name": "plotly"
+				},
+				{
+					"name": "arrow"
+				},
+				{
+					"name": "digest"
+				},
+				{
+					"name": "rmarkdown"
+				},
+				{
+					"name": "webshot2"
+				},
+				{
+					"name": "chromote"
+				},
+				{
+					"name": "remotes"
+				},
+				{
+					"name": "dplyr"
+				}
+			]
 		}
 	}
 }
