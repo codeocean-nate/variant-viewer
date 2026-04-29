@@ -1,4 +1,4 @@
-# hash:sha256:977c934e665975b9bfd769c844dd9364f3d80755d3ac73cc7e1d06bfe3ca9e2c
+# hash:sha256:c1243562a09a772b3b0e6e6fae69da7d30b83f13e9548bad84b2ec59ffca6191
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/bioconductor-320:RELEASE_3_20_NoGPU
 
@@ -7,38 +7,45 @@ ARG GIT_ASKPASS
 COPY git-ask-pass /
 
 RUN apt-get update \
+    && apt-get install -y --no-install-recommends software-properties-common gnupg \
+    && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys \
+        0xAD2323F17326AE31401037733E05EBFF05441C52 \
+    && add-apt-repository -y 'deb http://deb.codeocean.com/shiny-server-trusty/ ubuntu main' \
+    && apt-get purge -y --autoremove software-properties-common \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-        bcftools \
-        build-essential \
-        chromium-browser \
-        libbz2-dev \
-        libcairo2-dev \
-        libcurl4-openssl-dev \
-        libjpeg-dev \
-        liblzma-dev \
-        libpng-dev \
-        libssl-dev \
-        libxml2-dev \
-        openjdk-17-jre-headless \
-        pandoc \
-        samtools \
-        tabix \
-        zlib1g-dev \
+        bcftools=1.19-1build2 \
+        build-essential=12.10ubuntu1 \
+        chromium-browser=2:1snap1-0ubuntu2 \
+        libbz2-dev=1.0.8-5.1build0.1 \
+        libcairo2-dev=1.18.0-3build1 \
+        libcurl4-openssl-dev=8.5.0-2ubuntu10.8 \
+        libjpeg-dev=8c-2ubuntu11 \
+        liblzma-dev=5.6.1+really5.4.5-1ubuntu0.2 \
+        libpng-dev=1.6.43-5ubuntu0.5 \
+        libssl-dev=3.0.13-0ubuntu3.9 \
+        libxml2-dev=2.9.14+dfsg-1.3ubuntu3.7 \
+        openjdk-17-jre-headless=17.0.18+8-1~24.04.1 \
+        pandoc=3.8.2.1-1 \
+        samtools=1.19.2-1build2 \
+        shiny-server=1.5.20.1002-2build1 \
+        tabix=1.19+ds-1.1build3 \
+        zlib1g-dev=1:1.3.dfsg-3.1ubuntu2.1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN Rscript -e 'remotes::install_version("shiny")' \
-    && Rscript -e 'remotes::install_version("shinydashboard")' \
-    && Rscript -e 'remotes::install_version("shinyFiles")' \
-    && Rscript -e 'remotes::install_version("shinyjs")' \
-    && Rscript -e 'remotes::install_version("DT")' \
-    && Rscript -e 'remotes::install_version("plotly")' \
-    && Rscript -e 'remotes::install_version("arrow")' \
-    && Rscript -e 'remotes::install_version("digest")' \
-    && Rscript -e 'remotes::install_version("rmarkdown")' \
-    && Rscript -e 'remotes::install_version("webshot2")' \
-    && Rscript -e 'remotes::install_version("chromote")' \
-    && Rscript -e 'remotes::install_version("remotes")' \
-    && Rscript -e 'remotes::install_version("dplyr")'
+RUN Rscript -e 'remotes::install_version("shiny", "1.13.0")' \
+    && Rscript -e 'remotes::install_version("shinydashboard", "0.7.3")' \
+    && Rscript -e 'remotes::install_version("shinyFiles", "0.9.3")' \
+    && Rscript -e 'remotes::install_version("shinyjs", "2.1.1")' \
+    && Rscript -e 'remotes::install_version("DT", "0.34.0")' \
+    && Rscript -e 'remotes::install_version("plotly", "4.12.0")' \
+    && Rscript -e 'remotes::install_version("arrow", "23.0.1.2")' \
+    && Rscript -e 'remotes::install_version("digest", "0.6.39")' \
+    && Rscript -e 'remotes::install_version("rmarkdown", "2.31")' \
+    && Rscript -e 'remotes::install_version("webshot2", "0.1.2")' \
+    && Rscript -e 'remotes::install_version("chromote", "0.5.1")' \
+    && Rscript -e 'remotes::install_version("remotes", "2.5.0")' \
+    && Rscript -e 'remotes::install_version("dplyr", "1.2.1")'
 
 COPY postInstall /
 RUN --mount=type=secret,id=secrets . /run/secrets/secrets \

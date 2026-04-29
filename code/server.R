@@ -65,7 +65,7 @@ server <- function(input, output, session) {
   
   # Disable the entire filter panel until data is loaded
   observe({
-    if (data_loaded()) shinyjs::enable("filter_panel") else shinyjs::disable("filter_panel")
+    shinyjs::toggleState("filter_panel", condition = data_loaded())
   })
   
   # Process VCF button handler
