@@ -49,11 +49,14 @@ ui <- dashboardPage(
       
       sliderInput("qual_filter", "QUAL Score",
                   min = 0, max = 1000, value = c(20, 1000), step = 10),
+      checkboxInput("include_na_qual", "Include NA QUAL", value = TRUE),
       
       checkboxInput("pass_only", "PASS Variants Only", value = TRUE),
       
-      sliderInput("maf_filter", "Minor Allele Frequency",
-                  min = 0, max = 0.5, value = c(0.01, 0.5), step = 0.01),
+      sliderInput("af_filter", "Allele Frequency (AF)",
+                  min = 0, max = 1, value = c(0, 1), step = 0.01),
+      sliderInput("maf_filter", "Minor Allele Frequency (MAF)",
+                  min = 0, max = 0.5, value = c(0, 0.5), step = 0.01),
       
       selectizeInput("gene_search", "Gene Name (HGNC)",
                      choices = NULL, multiple = TRUE,

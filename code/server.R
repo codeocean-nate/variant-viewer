@@ -122,14 +122,23 @@ server <- function(input, output, session) {
         filter(var_type %in% input$var_type)
     }
     
-    # QUAL filter (handle NA values)
+    # QUAL filter (handle NA values based on checkbox)
     if ("QUAL" %in% names(df)) {
-      df <- df %>% filter(is.na(QUAL) | (QUAL >= input$qual_filter[1] & QUAL <= input$qual_filter[2]))
+      if (input$include_na_qual) {
+        df <- df %>% filter(is.na(QUAL) | (QUAL >= input$qual_filter[1] & QUAL <= input$qual_filter[2]))
+      } else {
+        df <- df %>% filter(!is.na(QUAL) & QUAL >= input$qual_filter[1] & QUAL <= input$qual_filter[2])
+      }
     }
     
     # PASS filter
     if (input$pass_only) {
       df <- df %>% filter(FILTER == "PASS" | FILTER == ".")
+    }
+    
+    # Allele Frequency filter
+    if ("AF" %in% names(df)) {
+      df <- df %>% filter(AF >= input$af_filter[1] & AF <= input$af_filter[2])
     }
     
     # MAF filter
@@ -163,8 +172,10 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, "var_type", 
                               selected = c("SNP", "Indel", "MNP"))
     updateSliderInput(session, "qual_filter", value = c(20, 1000))
+    updateCheckboxInput(session, "include_na_qual", value = TRUE)
     updateCheckboxInput(session, "pass_only", value = TRUE)
-    updateSliderInput(session, "maf_filter", value = c(0.01, 0.5))
+    updateSliderInput(session, "af_filter", value = c(0, 1))
+    updateSliderInput(session, "maf_filter", value = c(0, 0.5))
     updateSelectizeInput(session, "gene_search", selected = character(0))
     updateSelectInput(session, "consequence_filter", selected = NULL)
     updateCheckboxGroupInput(session, "impact_filter", 
