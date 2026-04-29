@@ -61,8 +61,15 @@ server <- function(input, output, session) {
   
   # Load variants data from selected dataset
   variants_data <- reactive({
-    req(data_loaded()); d <- selected_dataset(); req(d)
-    read_parquet(file.path(d, "variants.parquet"))
+    req(data_loaded())
+    d <- selected_dataset()
+    req(d)
+    tryCatch({
+      read_parquet(file.path(d, "variants.parquet"))
+    }, error = function(e) {
+      showNotification(paste("Error loading variants:", e$message), type = "error", duration = NULL)
+      NULL
+    })
   })
   
   # Load gene list for autocomplete
