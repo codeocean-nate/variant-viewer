@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
   library(shinydashboard)
   library(shinyjs)
+  library(shinyFiles)
   library(DT)
   library(plotly)
 })

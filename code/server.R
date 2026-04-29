@@ -20,7 +20,7 @@ server <- function(input, output, session) {
   # File browser for /data/
   volumes <- c(data = "/data")
   shinyFileChoose(input, "vcf_browser", roots = volumes, 
-                  filetypes = c("vcf", "vcf.gz"))
+                  filetypes = c("vcf", "gz"))
   
   # Selected VCF path
   selected_vcf <- reactiveVal(NULL)
