@@ -99,57 +99,25 @@ preprocess_vcf <- function(vcf_path,
     stop("SnpEff JAR not found at ", snpeff_jar)
   }
   
-  # Run SnpEff with stderr capture
-  stderr_file <- tempfile()
-  cmd <- sprintf(
-    "java -Xmx8g -jar %s -dataDir %s GRCh38.105 %s 2> %s > %s",
-    shQuote(snpeff_jar), shQuote(snpeff_data_dir),
-    shQuote(vcf_path), shQuote(stderr_file), shQuote(annotated_vcf)
+  # Run SnpEff synchronously
+  exit_code <- system2(
+    "java",
+    args = c(
+      "-Xmx8g",
+      "-jar", snpeff_jar,
+      "-dataDir", snpeff_data_dir,
+      "GRCh38.105",
+      vcf_path
+    ),
+    stdout = annotated_vcf,
+    stderr = FALSE
   )
   
-  # Launch SnpEff in background
-  system(cmd, wait = FALSE, intern = FALSE)
-  
-  # Poll stderr for progress (every 2 seconds)
-  snpeff_complete <- FALSE
-  processed <- 0
-  
-  while (!snpeff_complete) {
-    Sys.sleep(2)
-    
-    # Check if SnpEff finished
-    if (file.exists(annotated_vcf)) {
-      snpeff_complete <- TRUE
-      report_progress(0.75, "SnpEff complete", sprintf("%d / %d variants", n_total, n_total))
-      break
-    }
-    
-    # Parse stderr for progress
-    if (file.exists(stderr_file)) {
-      stderr_lines <- readLines(stderr_file, warn = FALSE)
-      # SnpEff writes lines like "Done: 12345 variants"
-      progress_lines <- grep("Done:|variants processed", stderr_lines, value = TRUE, ignore.case = TRUE)
-      if (length(progress_lines) > 0) {
-        last_line <- tail(progress_lines, 1)
-        numbers <- as.integer(regmatches(last_line, gregexpr("[0-9]+", last_line))[[1]])
-        if (length(numbers) > 0) {
-          processed <- max(numbers)
-          frac <- min(processed / max(n_total, 1), 1.0)
-          progress_val <- 0.05 + 0.70 * frac
-          report_progress(progress_val, "Annotating with SnpEff...", 
-                          sprintf("%d / %d variants", processed, n_total))
-        }
-      }
-    }
-    
-    # Timeout after 30 minutes
-    elapsed_secs <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-    if (elapsed_secs > 1800) {
-      stop("SnpEff timed out after 30 minutes")
-    }
+  if (exit_code != 0 || !file.exists(annotated_vcf) || file.size(annotated_vcf) == 0) {
+    stop("SnpEff annotation failed. Check that /data/snpeff contains GRCh38.105 database.")
   }
   
-  unlink(stderr_file)
+  report_progress(0.75, "SnpEff complete", sprintf("%d / %d variants", n_total, n_total))
   
   # Stage 3: Parse annotated VCF (15%)
   report_progress(0.75, "Parsing annotated VCF...")
