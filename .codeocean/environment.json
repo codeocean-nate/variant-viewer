@@ -32,7 +32,7 @@
 				},
 				{
 					"name": "libcurl4-openssl-dev",
-					"version": "8.5.0-2ubuntu10.8"
+					"version": "8.5.0-2ubuntu10.9"
 				},
 				{
 					"name": "libjpeg-dev",
@@ -44,7 +44,7 @@
 				},
 				{
 					"name": "libpng-dev",
-					"version": "1.6.43-5ubuntu0.5"
+					"version": "1.6.43-5ubuntu0.6"
 				},
 				{
 					"name": "libssl-dev",

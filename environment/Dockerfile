@@ -1,4 +1,4 @@
-# hash:sha256:71c593a394ba3e5839b003382a1d78baa3de9eb56f80ea3e4825e58c7335c3ad
+# hash:sha256:3124d2dc67c488f9973081c89a5795d2358d4e03505cf351359fb7512baa47bf
 ARG REGISTRY_HOST
 FROM $REGISTRY_HOST/codeocean/bioconductor-320:RELEASE_3_20_NoGPU
 
@@ -13,10 +13,10 @@ RUN apt-get update \
         chromium-browser=2:1snap1-0ubuntu2 \
         libbz2-dev=1.0.8-5.1build0.1 \
         libcairo2-dev=1.18.0-3build1 \
-        libcurl4-openssl-dev=8.5.0-2ubuntu10.8 \
+        libcurl4-openssl-dev=8.5.0-2ubuntu10.9 \
         libjpeg-dev=8c-2ubuntu11 \
         liblzma-dev=5.6.1+really5.4.5-1ubuntu0.2 \
-        libpng-dev=1.6.43-5ubuntu0.5 \
+        libpng-dev=1.6.43-5ubuntu0.6 \
         libssl-dev=3.0.13-0ubuntu3.9 \
         libxml2-dev=2.9.14+dfsg-1.3ubuntu3.7 \
         openjdk-17-jre-headless=17.0.18+8-1~24.04.1 \
